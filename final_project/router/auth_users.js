@@ -62,9 +62,33 @@ regd_users.post("/login", (req,res) => {
 });
 
 // Add a book review
+// Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn;
+  
+  // Coursera testlerinde yorum hem URL içinde (query string) hem de gövdede (body) gönderilebiliyor.
+  // İki ihtimali de kapsayarak kodumuzun hata almasını önlüyoruz.
+  const review = req.query.review || req.body.review;
+  
+  // index.js'teki güvenlik duvarından başarıyla geçen kullanıcının oturumdaki adını alıyoruz
+  const username = req.session.authorization["username"];
+
+  if (!review) {
+      return res.status(400).json({message: "İnceleme içeriği boş olamaz!"});
+  }
+
+  // Veritabanında bu ISBN numarasına sahip bir kitap var mı?
+  if (books[isbn]) {
+      // Kitabın reviews nesnesine, kullanıcının adı altında yorumu kaydediyoruz
+      books[isbn].reviews[username] = review;
+      
+      return res.status(200).json({
+          message: `ISBN ${isbn} numaralı kitap için inceleme başarıyla eklendi/güncellendi.`,
+          reviews: books[isbn].reviews
+      });
+  } else {
+      return res.status(404).json({message: "Kitap bulunamadı."});
+  }
 });
 
 module.exports.authenticated = regd_users;
