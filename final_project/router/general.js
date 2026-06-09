@@ -67,9 +67,36 @@ public_users.get('/author/:author',function (req, res) {
   }
 });
 // Get all books based on title
+// Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  // URL'den kitap başlığını alıyoruz
+  const bookTitle = req.params.title;
+  
+  // books objesinin tüm anahtarlarını çekiyoruz
+  const bookKeys = Object.keys(books);
+  
+  // Eşleşen kitapları tutacağımız dizi
+  const matchingBooks = [];
+
+  // Anahtarlar üzerinde döngü kuruyoruz
+  bookKeys.forEach(key => {
+      // Eğer sıradaki kitabın başlığı, aranan başlıkla aynıysa
+      if (books[key].title === bookTitle) {
+          matchingBooks.push({
+              isbn: key,
+              author: books[key].author,
+              title: books[key].title,
+              reviews: books[key].reviews
+          });
+      }
+  });
+
+  // Eşleşme bulunduysa listeyi gönder, bulunamadıysa 404 dön
+  if (matchingBooks.length > 0) {
+      return res.status(200).send(JSON.stringify(matchingBooks, null, 4));
+  } else {
+      return res.status(404).json({message: "Bu başlığa sahip kitap bulunamadı"});
+  }
 });
 
 //  Get book review
