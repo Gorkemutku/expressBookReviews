@@ -6,8 +6,24 @@ const public_users = express.Router();
 
 
 public_users.post("/register", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  // İsteğin gövdesinden (body) bilgileri al
+  const username = req.body.username;
+  const password = req.body.password;
+
+  // 1. KONTROL: Kullanıcı adı ve şifre girilmiş mi?
+  if (username && password) {
+      // 2. KONTROL: Kullanıcı adı daha önce alınmış mı? (isValid fonksiyonu ile)
+      if (!isValid(username)) {
+          // Her şey yolundaysa yeni kullanıcıyı 'users' dizisine ekle
+          users.push({"username": username, "password": password});
+          return res.status(200).json({message: "Kullanıcı başarıyla kaydedildi. Artık giriş yapabilirsiniz."});
+      } else {
+          // Kullanıcı adı zaten varsa 400 (Bad Request) hatası dön
+          return res.status(400).json({message: "Bu kullanıcı adı zaten mevcut!"});
+      }
+  }
+  // Alanlar boş bırakıldıysa hata dön
+  return res.status(400).json({message: "Kullanıcı adı ve şifre alanları zorunludur."});
 });
 
 // GÖREV 1: Tüm kitapları getir
