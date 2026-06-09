@@ -6,12 +6,10 @@ const regd_users = express.Router();
 let users = [];
 
 const isValid = (username)=>{ 
-  // 'users' dizisinde bu kullanıcı adıyla eşleşen bir kayıt arıyoruz
   let userswithsamename = users.filter((user) => {
     return user.username === username;
   });
   
-  // Eğer dizi 0'dan büyükse (yani kullanıcı varsa) true dön
   if(userswithsamename.length > 0){
     return true;
   } else {
@@ -20,12 +18,10 @@ const isValid = (username)=>{
 }
 
 const authenticatedUser = (username,password)=>{ 
-  // users dizisinde hem kullanıcı adı hem de şifresi eşleşen bir kayıt arıyoruz
   let validusers = users.filter((user)=>{
     return (user.username === username && user.password === password)
   });
   
-  // Eğer eşleşme varsa true, yoksa false dön
   if(validusers.length > 0){
     return true;
   } else {
@@ -33,25 +29,20 @@ const authenticatedUser = (username,password)=>{
   }
 }
 
-//only registered users can login
 // Sadece kayıtlı kullanıcılar giriş yapabilir
 regd_users.post("/login", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  // Kullanıcı adı veya şifre boş bırakılmış mı kontrolü
   if (!username || !password) {
       return res.status(404).json({message: "Kullanıcı adı veya şifre eksik!"});
   }
 
-  // Fonksiyonumuzla bilgilerin doğruluğunu test ediyoruz
   if (authenticatedUser(username,password)) {
-    // Bilgiler doğruysa bir JWT oluşturuyoruz. (Şifre anahtarını "access" yapıyoruz)
     let accessToken = jwt.sign({
       data: password
-    }, 'access', { expiresIn: 60 * 60 }); // Token 1 saat (60x60 sn) geçerli olacak
+    }, 'access', { expiresIn: 60 * 60 });
 
-    // Token'ı ve kullanıcı adını tarayıcı oturumuna (session) kaydediyoruz
     req.session.authorization = {
       accessToken, username
     }
@@ -61,31 +52,44 @@ regd_users.post("/login", (req,res) => {
   }
 });
 
-// Add a book review
-// Add a book review
+// Add a book review (PUT FONKSİYONU)
 regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
-  
-  // Coursera testlerinde yorum hem URL içinde (query string) hem de gövdede (body) gönderilebiliyor.
-  // İki ihtimali de kapsayarak kodumuzun hata almasını önlüyoruz.
   const review = req.query.review || req.body.review;
-  
-  // index.js'teki güvenlik duvarından başarıyla geçen kullanıcının oturumdaki adını alıyoruz
   const username = req.session.authorization["username"];
 
   if (!review) {
       return res.status(400).json({message: "İnceleme içeriği boş olamaz!"});
   }
 
-  // Veritabanında bu ISBN numarasına sahip bir kitap var mı?
   if (books[isbn]) {
-      // Kitabın reviews nesnesine, kullanıcının adı altında yorumu kaydediyoruz
       books[isbn].reviews[username] = review;
       
       return res.status(200).json({
           message: `ISBN ${isbn} numaralı kitap için inceleme başarıyla eklendi/güncellendi.`,
           reviews: books[isbn].reviews
       });
+  } else {
+      return res.status(404).json({message: "Kitap bulunamadı."});
+  }
+}); // <-- İŞTE EKSİK OLAN KAPATMA PARANTEZİ BURASIYDI!
+
+// Bir kitap incelemesini silme (DELETE FONKSİYONU)
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const username = req.session.authorization["username"];
+
+  if (books[isbn]) {
+      if (books[isbn].reviews[username]) {
+          delete books[isbn].reviews[username];
+          
+          return res.status(200).json({
+              message: `ISBN ${isbn} numaralı kitaba ait incelemeniz başarıyla silindi.`,
+              reviews: books[isbn].reviews
+          });
+      } else {
+          return res.status(404).json({message: "Bu kitapta size ait silinecek bir inceleme bulunamadı."});
+      }
   } else {
       return res.status(404).json({message: "Kitap bulunamadı."});
   }
