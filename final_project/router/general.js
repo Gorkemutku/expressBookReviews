@@ -144,36 +144,54 @@ const getBooksByAuthorWithAxios = async (author) => {
 };
 // Get all books based on title
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  // URL'den kitap başlığını alıyoruz
+// Get all books based on title
+public_users.get('/title/:title', async function (req, res) {
   const bookTitle = req.params.title;
   
-  // books objesinin tüm anahtarlarını çekiyoruz
-  const bookKeys = Object.keys(books);
-  
-  // Eşleşen kitapları tutacağımız dizi
-  const matchingBooks = [];
+  try {
+      // Görev 13: Başlık arama işlemini Promise ile asenkron hale getiriyoruz
+      const getBooksByTitle = new Promise((resolve, reject) => {
+          const bookKeys = Object.keys(books);
+          const matchingBooks = [];
 
-  // Anahtarlar üzerinde döngü kuruyoruz
-  bookKeys.forEach(key => {
-      // Eğer sıradaki kitabın başlığı, aranan başlıkla aynıysa
-      if (books[key].title === bookTitle) {
-          matchingBooks.push({
-              isbn: key,
-              author: books[key].author,
-              title: books[key].title,
-              reviews: books[key].reviews
+          // Anahtarlar üzerinde dönerek eşleşen başlıkları bul
+          bookKeys.forEach(key => {
+              if (books[key].title === bookTitle) {
+                  matchingBooks.push({
+                      isbn: key,
+                      author: books[key].author,
+                      title: books[key].title,
+                      reviews: books[key].reviews
+                  });
+              }
           });
-      }
-  });
 
-  // Eşleşme bulunduysa listeyi gönder, bulunamadıysa 404 dön
-  if (matchingBooks.length > 0) {
-      return res.status(200).send(JSON.stringify(matchingBooks, null, 4));
-  } else {
-      return res.status(404).json({message: "Bu başlığa sahip kitap bulunamadı"});
+          // Eğer kitap bulunduysa başarılı dön (resolve), bulunamadıysa hata dön (reject)
+          if (matchingBooks.length > 0) {
+              resolve(matchingBooks);
+          } else {
+              reject("Bu başlığa sahip kitap bulunamadı");
+          }
+      });
+
+      // Promise'in sonucunu bekliyoruz
+      const titleBooks = await getBooksByTitle;
+      return res.status(200).send(JSON.stringify(titleBooks, null, 4));
+
+  } catch (error) {
+      return res.status(404).json({message: error});
   }
 });
+
+// Görev 13: Axios kullanarak belirli bir başlığa göre kitapları getiren simülasyon fonksiyonu
+const getBooksByTitleWithAxios = async (title) => {
+  try {
+      const response = await axios.get(`http://localhost:5000/title/${title}`);
+      console.log(`Axios ile çekilen '${title}' başlığındaki kitaplar:`, response.data);
+  } catch (error) {
+      console.error("Axios isteği başarısız:", error);
+  }
+};
 
 //  Get book review
 // Get book review
