@@ -10,10 +10,9 @@ public_users.post("/register", (req,res) => {
   return res.status(300).json({message: "Yet to be implemented"});
 });
 
-// Get the book list available in the shop
+// GÖREV 1: Tüm kitapları getir
 public_users.get('/',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  return res.status(200).send(JSON.stringify(books, null, 4));
 });
 
 // Get book details based on ISBN

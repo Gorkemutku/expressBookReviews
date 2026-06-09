@@ -11,7 +11,27 @@ app.use(express.json());
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+    // Kullanıcının oturumunda yetkilendirme objesi var mı kontrol et
+    if(req.session.authorization) {
+        
+        // Oturumdan erişim token'ını al
+        let token = req.session.authorization['accessToken'];
+
+        // Token'ın geçerliliğini doğrula (şifre anahtarımızı "access" olarak belirliyoruz)
+        jwt.verify(token, "access", (err, user) => {
+            if(!err) {
+                // Token geçerliyse kullanıcı bilgisini isteğe ekle ve sonraki adıma geç
+                req.user = user;
+                next(); 
+            } else {
+                // Token geçersizse veya süresi dolmuşsa
+                return res.status(403).json({message: "User not authenticated"});
+            }
+        });
+    } else {
+        // Oturumda hiç token yoksa (kullanıcı giriş yapmamışsa)
+        return res.status(403).json({message: "User not logged in"});
+    }
 });
  
 const PORT =5000;
