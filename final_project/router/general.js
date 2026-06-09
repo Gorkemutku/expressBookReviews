@@ -16,9 +16,21 @@ public_users.get('/',function (req, res) {
 });
 
 // Get book details based on ISBN
+// Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  // İstek atılan URL'den ISBN numarasını (parametreyi) çekiyoruz
+  const isbn = req.params.isbn;
+  
+  // books objesinden o numaraya sahip kitabı buluyoruz
+  const book = books[isbn];
+
+  if (book) {
+      // Kitap bulunduysa 200 (OK) koduyla kitabı gönder
+      return res.status(200).send(JSON.stringify(book, null, 4));
+  } else {
+      // Kitap bulunamadıysa 404 (Not Found) hatası dön
+      return res.status(404).json({message: "Kitap bulunamadı"});
+  }
  });
   
 // Get book details based on author
