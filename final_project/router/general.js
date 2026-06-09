@@ -94,37 +94,54 @@ const getBookWithAxios = async (isbn) => {
   
 // Get book details based on author
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  // URL'den yazar adını alıyoruz
+// Get book details based on author
+public_users.get('/author/:author', async function (req, res) {
   const authorName = req.params.author;
   
-  // books objesinin tüm anahtarlarını (ISBN numaralarını) bir dizi olarak alıyoruz
-  const bookKeys = Object.keys(books);
-  
-  // Eşleşen kitapları tutacağımız boş bir dizi oluşturuyoruz
-  const matchingBooks = [];
+  try {
+      // Görev 12: Yazar arama işlemini Promise ile asenkron hale getiriyoruz
+      const getBooksByAuthor = new Promise((resolve, reject) => {
+          const bookKeys = Object.keys(books);
+          const matchingBooks = [];
 
-  // Anahtarlar üzerinde döngü kuruyoruz
-  bookKeys.forEach(key => {
-      // Eğer sıradaki kitabın yazarı, aranan yazarla aynıysa
-      if (books[key].author === authorName) {
-          // Kitabı listeye ekle (hangi ISBN'e sahip olduğunu da görebilmek için key'i de ekliyoruz)
-          matchingBooks.push({
-              isbn: key,
-              author: books[key].author,
-              title: books[key].title,
-              reviews: books[key].reviews
+          // Anahtarlar üzerinde dönerek eşleşen yazarları bul
+          bookKeys.forEach(key => {
+              if (books[key].author === authorName) {
+                  matchingBooks.push({
+                      isbn: key,
+                      author: books[key].author,
+                      title: books[key].title,
+                      reviews: books[key].reviews
+                  });
+              }
           });
-      }
-  });
 
-  // Eğer listede en az 1 kitap varsa listeyi gönder, yoksa 404 hatası dön
-  if (matchingBooks.length > 0) {
-      return res.status(200).send(JSON.stringify(matchingBooks, null, 4));
-  } else {
-      return res.status(404).json({message: "Bu yazara ait kitap bulunamadı"});
+          // Eğer kitap bulunduysa başarılı dön (resolve), bulunamadıysa hata dön (reject)
+          if (matchingBooks.length > 0) {
+              resolve(matchingBooks);
+          } else {
+              reject("Bu yazara ait kitap bulunamadı");
+          }
+      });
+
+      // Promise'in sonucunu bekliyoruz
+      const authorBooks = await getBooksByAuthor;
+      return res.status(200).send(JSON.stringify(authorBooks, null, 4));
+
+  } catch (error) {
+      return res.status(404).json({message: error});
   }
 });
+
+// Görev 12: Axios kullanarak belirli bir yazara göre kitapları getiren simülasyon fonksiyonu
+const getBooksByAuthorWithAxios = async (author) => {
+  try {
+      const response = await axios.get(`http://localhost:5000/author/${author}`);
+      console.log(`Axios ile çekilen '${author}' kitapları:`, response.data);
+  } catch (error) {
+      console.error("Axios isteği başarısız:", error);
+  }
+};
 // Get all books based on title
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
